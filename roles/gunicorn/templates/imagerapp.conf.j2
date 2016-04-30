@@ -1,0 +1,17 @@
+description "imagerapp"
+
+start on (filesystem)
+stop on runlevel [016]
+
+respawn
+setuid www-data
+setgid www-data
+chdir {{ django_home }}/imagersite
+
+env ALLOWED_HOSTS=ec2-52-11-145-206.us-west-2.compute.amazonaws.com
+env DATABASE_URL={{ db_url }}
+env EMAIL_HOST_USER=noreplymini338@gmail.com
+env EMAIL_HOST_PASSWORD=hytnddrcodsvxojk
+env DEFAULT_FROM_EMAIL=noreplymini338@gmail.com
+
+exec gunicorn -b 127.0.0.1:8000 -w 4 imagersite.wsgi --error-logfile /tmp/gunicorn-error.log

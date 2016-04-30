@@ -9,12 +9,15 @@
     - python-pip
     - postgresql-client
     - libpq-dev
-    - python-pip
     - python-psycopg2
     - git
+    - libncurses5-dev
+    - zlib1g-dev
+    - libjpeg-dev
+
 
 - name: Clone Django Repository
-  git: repo=https://github.com/cewing/djangoblog_uwpce.git dest={{ django_home }} force=yes
+  git: repo=https://github.com/nadiabahrami/django-imager.git dest={{ django_home }} force=yes
 
 - name: Install Python Dependencies
   sudo: yes
@@ -38,14 +41,54 @@
   environment:
     DATABASE_URL: "{{ db_url }}"
   django_manage:
-    app_path: "{{ django_home }}"
-    settings: mysite.production
+    app_path: "{{ django_home }}/imagersite"
+    settings: imagersite.settings
+    command: makemigrations
+
+- name: Run Migrations
+  environment:
+    DATABASE_URL: "{{ db_url }}"
+  django_manage:
+    app_path: "{{ django_home }}/imagersite"
+    settings: imagersite.settings
     command: migrate
 
 - name: Collect Static Files
   environment:
     DATABASE_URL: "{{ db_url }}"
   django_manage:
-    app_path: "{{ django_home }}"
-    settings: mysite.production
+    app_path: "{{ django_home }}/imagersite"
+    settings: imagersite.settings
     command: collectstatic
+
+- name: Media Ownership
+  sudo: yes
+  file: path={{ django_home }}/imagersite/media state=directory owner=www-data group=www-data mode=0755 recurse=yes
+
+- name: Create Cache Table
+  environment:
+    DATABASE_URL: "{{ db_url }}"
+  django_manage:
+    app_path: "{{ django_home }}/imagersite"
+    settings: imagersite.settings
+    cache_table: image_cache_table
+    command: createcachetable
+
+- name: Make Sorl Migrations
+  sudo: yes
+  environment:
+    DATABASE_URL: "{{ db_url }}"
+  django_manage:
+    app_path: "{{ django_home }}/imagersite"
+    settings: imagersite.settings
+    command: makemigrations thumbnail
+
+- name: Make Sorl Migrate
+  sudo: yes
+  environment:
+    DATABASE_URL: "{{ db_url }}"
+  django_manage:
+    app_path: "{{ django_home }}/imagersite"
+    settings: imagersite.settings
+    command: migrate thumbnail
+
